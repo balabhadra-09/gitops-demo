@@ -48,16 +48,21 @@ pipeline {
             }
         }
 
-        stage('Check Skip') {
-    steps {
-        script {
-            def msg = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
-            if (msg.contains('[skip ci]')) {
-                currentBuild.result = 'NOT_BUILT'
-                error('Skipping: commit from Jenkins')
+        stages {
+    stage('Check Skip') {
+        steps {
+            script {
+                def msg = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
+                if (msg.contains('[skip ci]')) {
+                    currentBuild.result = 'NOT_BUILT'
+                    error('Skipping: commit from Jenkins')
+                }
             }
         }
     }
+    stage('Docker-Build') { ... }
+    stage('Docker-Push') { ... }
+    stage('Update-Manifest') { ... }
 }
     }
 }
