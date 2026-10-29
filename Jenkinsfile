@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         IMAGE = 'balabhadra12/gitops-demo'
+        REPO  = 'github.com/balabhadra-09/gitops-demo.git'
     }
 
     stages {
@@ -27,5 +28,36 @@ pipeline {
                 }
             }
         }
+
+        stage('Update-Manifest') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'github-creds',
+                    usernameVariable: 'GIT_USER',
+                    passwordVariable: 'GIT_TOKEN'
+                )]) {
+                    sh '''
+                        sed -i "s|image: ${IMAGE}:.*|image: ${IMAGE}:${BUILD_NUMBER}|" k8s/deployment.yaml
+                        git config user.email "jenkins@local"
+                        git config user.name "jenkins"
+                        git add k8s/deployment.yaml
+                        git commit -m "ci: update image tag to ${BUILD_NUMBER} [skip ci]"
+                        git push https://${GIT_USER}:${GIT_TOKEN}@${REPO} HEAD:main
+                    '''
+                }
+            }
+        }
+
+        stage('Check Skip') {
+    steps {
+        script {
+            def msg = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
+            if (msg.contains('[skip ci]')) {
+                currentBuild.result = 'NOT_BUILT'
+                error('Skipping: commit from Jenkins')
+            }
+        }
+    }
+}
     }
 }
