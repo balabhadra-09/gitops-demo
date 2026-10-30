@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: gitops-demo
-        image: balabhadra12/gitops-demo:4
+        image: balabhadra12/gitops-demo:6
         ports:
         - containerPort: 80
         readinessProbe:
